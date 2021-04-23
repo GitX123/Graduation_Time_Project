@@ -64,6 +64,7 @@ def graduation_time(professor, revision_time, student_obj_list, result):
         # open the page
         url = record_url + str(j + 1)
         browser.open(url)
+        
         page = browser.get_current_page()
 
         # filter out PhD students
@@ -79,7 +80,7 @@ def graduation_time(professor, revision_time, student_obj_list, result):
             result.get('student_obj').append({
                 'name': student_name,
                 'id': student_obj_list[i].get('id'),
-                'time_cost': grad_time - student_obj_list[i].get('start_time') + revision_time
+                'time_cost': round(grad_time - student_obj_list[i].get('start_time') + revision_time, 2)
             })
         else:
             # [TODO] Search for other records (if names do not match)
@@ -123,8 +124,8 @@ def search(data, count=10, start_month=7.0, revision_time=2.0/12):
     ccd = 'ccd=' + browser.get_url()[54: 60]
     record_url = base_url + ccd + '/record?r1=' # url prefix for entries of theses  
 
-    i, j = 0, 0 # j is used to prevent from looping forever
-    threshold = 30
+    i, j = 0, 0
+    threshold = 30 # prevent from looping forever
 
     student_obj_list = []
     while i < count and j < threshold:
@@ -163,6 +164,6 @@ def search(data, count=10, start_month=7.0, revision_time=2.0/12):
     avg_time = 0.0
     for r in result.get('student_obj'):
         avg_time += r.get('time_cost') / len(result['student_obj'])
-    result.update({'avg_time': avg_time})
+    result.update({'avg_time': round(avg_time, 2)})
 
     return result
