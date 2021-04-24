@@ -36,7 +36,7 @@ def start_year(university: str, student_id: str) -> str:
     return year
 
 # [TODO]
-def graduation_time(professor, revision_time, student_obj_list, result):
+def graduation_time(professor, revision_time, student_name_list, student_obj_list, result):
     # open page of NDLTD
     base_url = 'https://ndltd.ncl.edu.tw/cgi-bin/gs32/gsweb.cgi/'
     url = base_url + 'login?o=dwebmge'
@@ -74,17 +74,28 @@ def graduation_time(professor, revision_time, student_obj_list, result):
             continue
 
         student_name = page.body.form.div.table.tbody.tr.td.table.find("th", text="研究生:").find_next_sibling().get_text()
-        if student_name == student_obj_list[i]['name']:
+
+        if student_name in student_name_list:
+            index = student_name_list.index(student_name)
             oral_time = page.body.form.div.table.tbody.tr.td.table.find("th", text="口試日期:").find_next_sibling().get_text()
             grad_time = (float(oral_time.split('-')[0]) - 1911) + float(oral_time.split('-')[1]) / 12.0 # ROC year + month
             result.get('student_obj').append({
                 'name': student_name,
-                'id': student_obj_list[i].get('id'),
+                'id': student_obj_list[index].get('id'),
                 'time_cost': round(grad_time - student_obj_list[i].get('start_time') + revision_time, 2)
             })
-        else:
-            # [TODO] Search for other records (if names do not match)
-            pass
+
+        # if student_name == student_obj_list[i]['name']:
+        #     oral_time = page.body.form.div.table.tbody.tr.td.table.find("th", text="口試日期:").find_next_sibling().get_text()
+        #     grad_time = (float(oral_time.split('-')[0]) - 1911) + float(oral_time.split('-')[1]) / 12.0 # ROC year + month
+        #     result.get('student_obj').append({
+        #         'name': student_name,
+        #         'id': student_obj_list[i].get('id'),
+        #         'time_cost': round(grad_time - student_obj_list[i].get('start_time') + revision_time, 2)
+        #     })
+        # else:
+        #     # [TODO] Search for other records (if names do not match)
+        #     pass
 
         i += 1
         j += 1
@@ -127,7 +138,7 @@ def search(data, count=10, start_month=7.0, revision_time=2.0/12):
     i, j = 0, 0
     threshold = 30 # prevent from looping forever
 
-    student_obj_list = []
+    student_obj_list, student_name_list = [], []
     while i < count and j < threshold:
         # open the page
         url = record_url + str(j + 1)
@@ -154,11 +165,12 @@ def search(data, count=10, start_month=7.0, revision_time=2.0/12):
                 'id': student_id,
                 'start_time': start_time
             })
+            student_name_list.append(student_name)
         i += 1
         j += 1
 
     # store the results
-    graduation_time(data.get('name'), revision_time, student_obj_list, result)
+    graduation_time(data.get('name'), revision_time, student_name_list, student_obj_list, result)
 
     # average graduation time
     avg_time = 0.0
